@@ -2,7 +2,11 @@ name: Update page feed
 
 on:
   schedule:
-    - cron: "17 3 * * *"   # daily, ~04:17/05:17 Berlin
+    # GitHub often starts scheduled runs hours late (observed ~5h), so run
+    # right after midnight Berlin (CEST / CET) and once more as a fallback.
+    - cron: "7 22 * * *"   # 00:07 Berlin in summer time
+    - cron: "7 23 * * *"   # 00:07 Berlin in winter time
+    - cron: "7 3 * * *"    # fallback
   workflow_dispatch:        # manual "Run workflow" button
 
 permissions:
