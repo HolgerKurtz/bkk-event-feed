@@ -17,8 +17,8 @@ Labels: the category shown in the calendar ("oper", "ballett", "konzert");
 events without a category (guided tours, workshops) get "sonstiges".
 
 Image and description are not in the calendar. They come from the production
-page (og:image, meta description), cached in feeds/staatsoper-details.json so
-only new pages are fetched. og:image is WebP only, so CONVERT_IMAGES routes it
+page (og:image, the photos of its "Impression" gallery, meta description), cached
+in feeds/staatsoper-details.json so only new pages are fetched. og:image is WebP only, so CONVERT_IMAGES routes it
 through wsrv.nl to get a JPEG.
 """
 import html
@@ -35,7 +35,7 @@ LINK = CALENDAR_URL
 BRAND = "Hamburgische Staatsoper"
 CONVERT_IMAGES = True
 MIN_EVENTS = 100         # currently ~420 performances / ~95 URLs
-MAX_INCOMPLETE = 0.4     # ~30 % of pages (mostly side events) have no image or no price
+MAX_INCOMPLETE = 0.5     # ~40 % of pages (mostly side events) have no image or no price
 UNAVAILABLE = {"ausverkauft", "aktuell keine karten"}
 TZ = ZoneInfo("Europe/Berlin")
 
@@ -59,18 +59,28 @@ def prices(block):
     return as_float(enabled), as_float(every)
 
 
+GALLERY_IMG = re.compile(r'<li class="splide__slide">\s*<div class="block--image">.*?'
+                         r'data-src="(/external-images/[^"?]+)', re.S)
+MAX_ADDITIONAL_IMAGES = 20   # Meta's limit for additional_image_link
+
+
 def load_details(url):
     page = fetch(url)
+    # The production's "Impression" gallery (not sponsor logos or other images on the page).
+    gallery = list(dict.fromkeys(BASE + p + "?w=2000" for p in GALLERY_IMG.findall(page)))
     img = re.search(r'<meta property="og:image" content="([^"]+)"', page)
     if img:
         image = html.unescape(img.group(1))
-    else:  # many side events have no og:image, but an "Impression" gallery of their own
-        img = re.search(r'splide__slide.*?data-src="(/external-images/[^"?]+)', page, re.S)
-        # Some side events (tours, school programmes, talks) have no image at all:
-        # cached as "" so they aren't re-fetched daily; left out of the product feed.
-        image = BASE + img.group(1) + "?w=2000" if img else ""
+    else:
+        # Many side events have no og:image; then the first gallery photo is the main image.
+        # Some (tours, school programmes, talks) have no image at all: cached as "" so they
+        # aren't re-fetched daily, and left out of the product feed.
+        image = gallery[0] if gallery else ""
+    file_name = lambda u: u.split("?")[0].rsplit("/", 1)[-1]
+    gallery = [g for g in gallery if file_name(g) != file_name(image)][:MAX_ADDITIONAL_IMAGES]
     desc = re.search(r'<meta name="description" content="([^"]*)"', page)
     return {"image": image,
+            "gallery": gallery,
             "description": text(desc.group(1)) if desc else ""}
 
 
@@ -128,7 +138,7 @@ def scrape():
         nxt = min(relevant, key=lambda p: p["start"])
         price = (min((x for p in avail for x in p["prices"]), default=None)
                  or min((x for p in ps for x in p["all_prices"]), default=None))
-        details = cache.get(url, load_details)
+        details = cache.get(url, load_details, fields=("image", "gallery", "description"))
         items.append({
             "id": url.rstrip("/").rsplit("/", 1)[1],
             "url": url,
@@ -140,6 +150,7 @@ def scrape():
             "available": bool(avail),
             "price": f"{price:.2f} EUR" if price else None,  # none listed: left out of product feed
             "image_url": details.get("image"),
+            "additional_images": details.get("gallery", []),
         })
     cache.save()
     return n_events, items

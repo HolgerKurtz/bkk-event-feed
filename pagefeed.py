@@ -17,7 +17,8 @@ Optional:
                              # fail if more than this fraction is left out
 
 An item is a dict with id, url, title, description, date (datetime), venue,
-labels, available (bool), price ("12.00 EUR"), image_url.
+labels, available (bool), price ("12.00 EUR"), image_url and optionally
+additional_images (list of URLs).
 
 Output: feeds/<client>.csv with columns "Page URL", "Custom label"
 (labels ";"-separated; available items only), and for item clients also
@@ -86,12 +87,13 @@ class DetailsCache:
     def _fresh(self, entry):
         return date.fromisoformat(entry["fetched"]) > date.today() - timedelta(days=self.MAX_AGE_DAYS)
 
-    def get(self, url, loader):
-        """Cached details for url; loader(url) -> dict is called if missing or stale.
+    def get(self, url, loader, fields=()):
+        """Cached details for url; loader(url) -> dict is called if missing, stale or
+        lacking one of fields (so adding a field refreshes the cache once).
         If loading fails, the stale entry (or {}) is returned and nothing is cached."""
         self.used.add(url)
         entry = self.data.get(url)
-        if entry and self._fresh(entry):
+        if entry and self._fresh(entry) and all(f in entry for f in fields):
             return entry
         try:
             entry = {**loader(url), "fetched": date.today().isoformat()}
@@ -145,8 +147,13 @@ def check_items(client, items):
     if getattr(client, "CONVERT_IMAGES", False):
         for it in ok:
             it["image_url"] = jpeg_url(it["image_url"])
+            it["additional_images"] = [jpeg_url(u) for u in it.get("additional_images", [])]
         if ok:
             check_image(ok[0]["image_url"])
+    for it in ok:  # Meta splits this field on , ; space and |, so a URL must contain none of them
+        bad = [u for u in it.get("additional_images", []) if any(c in u for c in ",; |")]
+        if bad:
+            raise FeedError(f"Item {it['url']}: additional image URL contains a separator: {bad[0]}")
     return ok
 
 
@@ -195,7 +202,8 @@ def to_xml(client, items):
             ("custom_label_1", ";".join(it.get("labels", []))),
             ("custom_label_2", it.get("venue", "")),
             ("custom_label_3", it["date"].strftime("%H:%M")),
-        ]:
+        ] + ([("additional_image_link", ",".join(it["additional_images"]))]  # Meta: one field, comma-separated
+             if it.get("additional_images") else []):
             ET.SubElement(item, f"{{{G}}}{tag}").text = value
     ET.indent(rss)
     return ET.tostring(rss, encoding="unicode", xml_declaration=True) + "\n"

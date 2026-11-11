@@ -29,6 +29,8 @@ One item per production page. Fields: `g:id` (URL slug), `g:title`, `g:descripti
 `g:condition`, `g:brand`, and
 `g:custom_label_0` = next performance date `DD.MM.YYYY`, `_1` = category, `_2` = venue,
 `_3` = time `HH:MM`.
+Staatsoper items also get `g:additional_image_link`: up to 20 comma-separated URLs of the
+other photos from the production's "Impression" gallery (Meta's format for this field).
 
 - **In Meta:** Catalog → Data sources → Data feed → scheduled feed, use the XML URL,
   and set a daily fetch (after ~03:00 Berlin).
@@ -39,7 +41,7 @@ One item per production page. Fields: `g:id` (URL slug), `g:title`, `g:descripti
   served through the free proxy [wsrv.nl](https://wsrv.nl), which converts them to JPEG on
   the fly; nothing is hosted here. If wsrv.nl goes away, change `jpeg_url()` in
   `pagefeed.py` (e.g. to Cloudinary's fetch URL).
-- Image and description come from each production page. They are cached in
+- Image, gallery photos and description come from each production page. They are cached in
   `feeds/<client>-details.json` and re-fetched after 30 days, so only new pages cause requests.
 - Step-by-step diagram of where each Staatsoper field comes from:
   [`docs/staatsoper-feed-flow.html`](docs/staatsoper-feed-flow.html) (open it in a browser).
