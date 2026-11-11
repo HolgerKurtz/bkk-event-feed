@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Staatsoper Feed Flow</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,600&display=swap">
+<style>
+/* Layout: one reading column; the flow is a vertical pipeline of stages, colour = where the data comes from */
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --fg: #1c2230;
+  --muted: #5d6677;
+  --line: #d9dde5;
+  --cal: #2457b8;        /* calendar page */
+  --cal-bg: #e8effb;
+  --prod: #a2580c;       /* production page */
+  --prod-bg: #fbf0e3;
+  --proxy: #23795a;      /* wsrv.nl */
+  --proxy-bg: #e5f4ed;
+  --calc: #6b4fb0;       /* computed by the script */
+  --calc-bg: #efebf9;
+  --drop: #b3373f;
+  --font-display: "Source Serif 4", Georgia, serif;
+  --font-body: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12151c; --surface: #1a1f29; --fg: #e5e8ef; --muted: #9aa3b4; --line: #2e3542;
+  --cal: #8bb0f5; --cal-bg: #1c2840; --prod: #f0b06a; --prod-bg: #33271a;
+  --proxy: #6fd3a8; --proxy-bg: #173027; --calc: #b9a5f2; --calc-bg: #262038; --drop: #f08a90;
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #12151c; --surface: #1a1f29; --fg: #e5e8ef; --muted: #9aa3b4; --line: #2e3542;
+  --cal: #8bb0f5; --cal-bg: #1c2840; --prod: #f0b06a; --prod-bg: #33271a;
+  --proxy: #6fd3a8; --proxy-bg: #173027; --calc: #b9a5f2; --calc-bg: #262038; --drop: #f08a90;
+  color-scheme: dark; }
+
+body { background: var(--bg); color: var(--fg); font: 15px/1.6 var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+main { max-width: 860px; margin: 0 auto; padding-block: 40px 64px; display: flex; flex-direction: column; gap: 48px; }
+h1, h2 { font-family: var(--font-display); font-weight: 600; text-wrap: balance; margin: 0; line-height: 1.2; }
+h1 { font-size: 2rem; }
+h2 { font-size: 1.4rem; }
+p { margin: 0; max-width: 65ch; }
+code, .mono { font-family: var(--font-mono); font-size: 0.86em; }
+section { display: flex; flex-direction: column; gap: 16px; }
+.lede { color: var(--muted); font-size: 1.05rem; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 0.86rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+.dot.cal { background: var(--cal); } .dot.prod { background: var(--prod); }
+.dot.proxy { background: var(--proxy); } .dot.calc { background: var(--calc); }
+
+/* pipeline */
+.flow { display: flex; flex-direction: column; }
+.stage { display: grid; grid-template-columns: 34px 1fr; gap: 0 16px; }
+.rail { display: flex; flex-direction: column; align-items: center; }
+.num { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+  font: 600 0.85rem var(--font-mono); color: var(--surface); background: var(--fg); flex-shrink: 0; }
+.rail::after { content: ""; width: 2px; flex: 1; background: var(--line); margin: 4px 0; }
+.stage:last-child .rail::after { display: none; }
+.box { min-width: 0; padding-bottom: 28px; display: flex; flex-direction: column; gap: 8px; }
+.box h3 { margin: 3px 0 0; font-size: 1.05rem; font-weight: 600; }
+.src { display: inline-flex; align-items: center; gap: 6px; font: 500 0.75rem var(--font-mono);
+  padding: 2px 8px; border-radius: 4px; width: fit-content; letter-spacing: 0.02em; }
+.src.cal { color: var(--cal); background: var(--cal-bg); }
+.src.prod { color: var(--prod); background: var(--prod-bg); }
+.src.proxy { color: var(--proxy); background: var(--proxy-bg); }
+.src.calc { color: var(--calc); background: var(--calc-bg); }
+.box ul { margin: 0; padding-left: 1.2em; max-width: 65ch; }
+.box li + li { margin-top: 2px; }
+.note { font-size: 0.88rem; color: var(--muted); }
+.drop { color: var(--drop); font-weight: 500; }
+
+.outputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.out { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.out .big { font: 600 1.6rem var(--font-display); font-variant-numeric: tabular-nums; }
+.out .file { font-family: var(--font-mono); font-size: 0.82rem; color: var(--muted); overflow-wrap: anywhere; }
+
+/* field table */
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: 0.88rem; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 600; }
+td:first-child { font-family: var(--font-mono); white-space: nowrap; }
+td.ex { font-family: var(--font-mono); font-size: 0.82rem; color: var(--muted); overflow-wrap: anywhere; }
+td .src { margin-bottom: 4px; display: flex; }
+
+.checks { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px 24px; margin: 0; padding: 0; list-style: none; }
+.checks li { padding-left: 14px; border-left: 2px solid var(--line); font-size: 0.92rem; }
+a { color: var(--cal); }
+</style>
+</head>
+<body>
+
+<main>
+  <header style="display:flex;flex-direction:column;gap:12px">
+    <h1>Staatsoper Feed Flow</h1>
+    <p class="lede">How <code>python3 pagefeed.py staatsoper</code> turns the opera's calendar into the Google Ads page feed and the Meta product feed, and where every value comes from. Numbers are from the run on 11.11.2026.</p>
+    <div class="legend" aria-label="Colour key">
+      <span><i class="dot cal"></i>Calendar page</span>
+      <span><i class="dot prod"></i>Production page (cached)</span>
+      <span><i class="dot proxy"></i>wsrv.nl image proxy</span>
+      <span><i class="dot calc"></i>Worked out by the script</span>
+    </div>
+  </header>
+
+  <section>
+    <h2>The run, step by step</h2>
+    <div class="flow">
+      <div class="stage"><div class="rail"><span class="num">1</span></div><div class="box">
+        <h3>Download the calendar</h3>
+        <span class="src cal">die-hamburgische-staatsoper.de/de/kalender</span>
+        <p>One request. The page lists every performance of the season (about 420), each with date, time, venue, category, title, subtitle, ticket button and price categories. It is about 150 KB compressed.</p>
+      </div></div>
+
+      <div class="stage"><div class="rail"><span class="num">2</span></div><div class="box">
+        <h3>Read each performance</h3>
+        <span class="src cal">one block per performance</span>
+        <ul>
+          <li>Performances that have already started (Berlin time) are skipped.</li>
+          <li>The ticket button decides availability: <code>Ausverkauft</code> or <code>Aktuell keine Karten</code> means sold out. <code>Tickets</code>, <code>VVK: …</code> and everything else count as available.</li>
+          <li>Prices come from the tag line, e.g. <code>7€ 13€ 21€ … 122€</code>. A price in grey (<code>tag--disabled</code>) is a sold-out category and is ignored for the lowest price.</li>
+        </ul>
+      </div></div>
+
+      <div class="stage"><div class="rail"><span class="num">3</span></div><div class="box">
+        <h3>Group performances by production page</h3>
+        <span class="src calc">420 performances → 96 pages</span>
+        <ul>
+          <li><b>Available</b>: at least one future performance is not sold out.</li>
+          <li><b>Date, time, venue</b>: from the next available performance (or the next one, if all are sold out).</li>
+          <li><b>Price</b>: the lowest bookable price across available performances. If none is bookable, the lowest listed price.</li>
+          <li><b>ID</b>: the end of the URL, e.g. <code>1911-wunderland</code>.</li>
+        </ul>
+      </div></div>
+
+      <div class="stage"><div class="rail"><span class="num">4</span></div><div class="box">
+        <h3>Look up image and description</h3>
+        <span class="src prod">production page, e.g. /de/programm/ballett/1911-wunderland</span>
+        <ul>
+          <li><b>Image</b>: the page's <code>og:image</code>. Without one, the first photo of the page's own "Impression" gallery.</li>
+          <li><b>Description</b>: the page's <code>meta description</code>. Without one, the subtitle from the calendar, then the title.</li>
+          <li>Stored in <code>feeds/staatsoper-details.json</code>. Only new pages are fetched, and known pages again after 30 days. The first run made 96 requests (one per second). A normal day makes 0–5.</li>
+        </ul>
+      </div></div>
+
+      <div class="stage"><div class="rail"><span class="num">5</span></div><div class="box">
+        <h3>Convert the image to JPEG</h3>
+        <span class="src proxy">wsrv.nl/?url=…&amp;w=1200&amp;output=jpg</span>
+        <p>The Staatsoper only serves WebP, which Meta rejects. The feed links each image through wsrv.nl, which converts it to a 1200 px JPEG when Meta fetches it. Nothing is stored here. Each run tests one converted image and fails if it doesn't come back as a JPEG.</p>
+      </div></div>
+
+      <div class="stage"><div class="rail"><span class="num">6</span></div><div class="box">
+        <h3>Check, then write both files</h3>
+        <span class="src calc">nothing is written if a check fails</span>
+        <p>If any check below fails, the old files stay online and the GitHub run fails, which sends an email.</p>
+      </div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What comes out</h2>
+    <div class="outputs">
+      <div class="out">
+        <span class="big">95 URLs</span>
+        <b>Page feed for Google Ads</b>
+        <span class="file">feeds/staatsoper.csv</span>
+        <p class="note">Every page with at least one available performance, labelled <code>oper</code>, <code>ballett</code>, <code>konzert</code> or <code>sonstiges</code>. Same content as before this change.</p>
+      </div>
+      <div class="out">
+        <span class="big">63 items</span>
+        <b>Product feed for Meta</b>
+        <span class="file">feeds/staatsoper.xml</span>
+        <p class="note">One item per page. Sold-out pages stay in as <code>out of stock</code> (none today).</p>
+      </div>
+      <div class="out">
+        <span class="big drop">33 left out</span>
+        <b>Product feed only</b>
+        <span class="file">still in the page feed</span>
+        <p class="note">14 side events with no image at all (tours, school programmes, talks) and 19 pages with no price listed yet, e.g. Matthäus-Passion and Scirocco. They join the product feed once the site shows a price.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Where each product feed field comes from</h2>
+    <p class="note">Example: Wunderland (Hamburg Ballett). Its page has no meta description, so the description falls back to the calendar subtitle.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Field</th><th>Source</th><th>Wunderland</th></tr></thead>
+        <tbody>
+          <tr><td>g:id</td><td><span class="src calc">script</span>End of the page URL</td><td class="ex">1911-wunderland</td></tr>
+          <tr><td>g:title</td><td><span class="src cal">calendar</span>Event title</td><td class="ex">Wunderland</td></tr>
+          <tr><td>g:description</td><td><span class="src prod">production page</span>Meta description, else calendar subtitle, else title</td><td class="ex">Alexei Ratmansky</td></tr>
+          <tr><td>g:link</td><td><span class="src cal">calendar</span>Link of the performance</td><td class="ex">…/de/programm/ballett/1911-wunderland</td></tr>
+          <tr><td>g:image_link</td><td><span class="src prod">production page</span><span class="src proxy">wsrv.nl</span>og:image or first gallery photo, served as a JPEG</td><td class="ex">https://wsrv.nl/?url=…webp%3Fw%3D2000&amp;w=1200&amp;output=jpg&amp;q=85</td></tr>
+          <tr><td>g:price</td><td><span class="src cal">calendar</span>Lowest bookable price</td><td class="ex">7.00 EUR</td></tr>
+          <tr><td>g:availability</td><td><span class="src cal">calendar</span>Ticket buttons of all future performances</td><td class="ex">in stock</td></tr>
+          <tr><td>g:condition</td><td><span class="src calc">fixed</span>Always <code>new</code></td><td class="ex">new</td></tr>
+          <tr><td>g:brand</td><td><span class="src calc">fixed</span><code>BRAND</code> in the client module</td><td class="ex">Hamburgische Staatsoper</td></tr>
+          <tr><td>g:custom_label_0</td><td><span class="src cal">calendar</span>Date of the next relevant performance. The supplement tool reads it for <code>custom_number_0</code> and <code>expiration_date</code>.</td><td class="ex">12.11.2026</td></tr>
+          <tr><td>g:custom_label_1</td><td><span class="src cal">calendar</span>Category</td><td class="ex">ballett</td></tr>
+          <tr><td>g:custom_label_2</td><td><span class="src cal">calendar</span>Venue of that performance</td><td class="ex">Staatsoper, Großes Haus</td></tr>
+          <tr><td>g:custom_label_3</td><td><span class="src cal">calendar</span>Start time of that performance</td><td class="ex">19:30</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Checks before anything is written</h2>
+    <ul class="checks">
+      <li>At least 100 performances found in the calendar.</li>
+      <li>At least half the performances have a ticket button.</li>
+      <li>There are URLs under <code>/oper/</code>, <code>/ballett/</code> or <code>/konzert/</code>.</li>
+      <li>Every URL has a label.</li>
+      <li>Neither feed shrinks by more than 50 % compared with the last run.</li>
+      <li>No more than 40 % of pages lack a price or image (today 34 %).</li>
+      <li>The first converted image comes back as <code>200 image/jpeg</code>.</li>
+      <li>Every item has an ID, title and link.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Switching it on and off</h2>
+    <p><code>ACTIVE = True</code> at the top of <code>clients/staatsoper.py</code>. Set it to <code>False</code> and the daily run skips the Staatsoper while its last feeds stay online. <code>python3 pagefeed.py staatsoper</code> still runs it by hand.</p>
+  </section>
+</main>
+</body>
+</html>

@@ -1,4 +1,4 @@
-name: Update page feeds
+name: Update feeds
 
 on:
   schedule:
@@ -53,5 +53,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
           git add feeds/
-          git diff --cached --quiet || git commit -m "Update page feeds $(date -u +%F)"
+          git diff --cached --quiet || git commit -m "Update feeds $(date -u +%F)"
           git push

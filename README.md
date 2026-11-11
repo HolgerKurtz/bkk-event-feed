@@ -1,18 +1,50 @@
-# Event page feeds for Google Ads (DSA)
+# Event feeds for Google Ads (DSA) and Meta catalogs
 
-Daily Google Ads page feeds with all upcoming events, one CSV per client.
+Daily feeds with all upcoming events, per client:
+- a Google Ads **page feed** (`feeds/<client>.csv`), and
+- for clients that support it, a Meta **product feed** (`feeds/<client>.xml`, Google Base RSS).
 
-| Client | Source | Labels | Feed URL |
-|---|---|---|---|
-| `bergson` | bergson.com/events/filter | genre slugs (`klassik;jazz`) | https://raw.githubusercontent.com/HolgerKurtz/event-pagefeeds/main/feeds/bergson.csv |
-| `staatsoper` | die-hamburgische-staatsoper.de/de/kalender (only pages with ≥1 future, not sold-out performance) | `oper` / `ballett` / `konzert` / `sonstiges` | https://raw.githubusercontent.com/HolgerKurtz/event-pagefeeds/main/feeds/staatsoper.csv |
+| Client | Source | Labels | Page feed (CSV) | Product feed (XML) |
+|---|---|---|---|---|
+| `bergson` | bergson.com/events/filter | genre slugs (`klassik;jazz`) | https://raw.githubusercontent.com/HolgerKurtz/event-pagefeeds/main/feeds/bergson.csv | – |
+| `staatsoper` | die-hamburgische-staatsoper.de/de/kalender (only pages with ≥1 future, not sold-out performance) | `oper` / `ballett` / `konzert` / `sonstiges` | https://raw.githubusercontent.com/HolgerKurtz/event-pagefeeds/main/feeds/staatsoper.csv | https://raw.githubusercontent.com/HolgerKurtz/event-pagefeeds/main/feeds/staatsoper.xml |
 
-- `pagefeed.py` – shared runner: fetches, sanity-checks and writes `feeds/<client>.csv`
-  (`Page URL`, `Custom label`). Python stdlib only.
+- `pagefeed.py` – shared runner: fetches, sanity-checks and writes the feeds. Python stdlib only.
 - `clients/<client>.py` – one scraper per website.
-- `.github/workflows/update-pagefeed.yml` – runs daily, commits changed CSVs.
+- `.github/workflows/update-pagefeed.yml` – runs daily, commits changed feeds.
 
-Run locally: `python3 pagefeed.py` (all clients) or `python3 pagefeed.py staatsoper`.
+Run locally: `python3 pagefeed.py` (all active clients) or `python3 pagefeed.py staatsoper`.
+
+## Turning clients on and off
+
+Each client module has `ACTIVE = True`. Set it to `False` and the daily run skips that
+client; its last feeds stay online unchanged. `python3 pagefeed.py <name>` still runs an
+inactive client by hand.
+
+## Product feed (Meta catalog)
+
+One item per production page. Fields: `g:id` (URL slug), `g:title`, `g:description`,
+`g:link`, `g:image_link`, `g:price` (lowest available ticket price, e.g. `7.00 EUR`),
+`g:availability` (`in stock` / `out of stock` = every future performance sold out),
+`g:condition`, `g:brand`, and
+`g:custom_label_0` = next performance date `DD.MM.YYYY`, `_1` = category, `_2` = venue,
+`_3` = time `HH:MM`.
+
+- **In Meta:** Catalog → Data sources → Data feed → scheduled feed, use the XML URL,
+  and set a daily fetch (after ~03:00 Berlin).
+- **In [meta-supplement-feed](https://github.com/HolgerKurtz/meta-supplement-feed):** enter the
+  XML URL as `source_xml_url`. `custom_label_0` is the date that its `custom_number_0` /
+  `expiration_date` rules read.
+- Staatsoper images are only available as WebP, and Meta doesn't accept WebP. They are
+  served through the free proxy [wsrv.nl](https://wsrv.nl), which converts them to JPEG on
+  the fly; nothing is hosted here. If wsrv.nl goes away, change `jpeg_url()` in
+  `pagefeed.py` (e.g. to Cloudinary's fetch URL).
+- Image and description come from each production page. They are cached in
+  `feeds/<client>-details.json` and re-fetched after 30 days, so only new pages cause requests.
+- Step-by-step diagram of where each Staatsoper field comes from:
+  [`docs/staatsoper-feed-flow.html`](docs/staatsoper-feed-flow.html) (open it in a browser).
+- Pages without an image (side events such as tours, school programmes and talks) or without a
+  listed price (presale not open yet) are left out of the product feed. They stay in the page feed.
 
 ## Load on the client sites
 
@@ -41,6 +73,9 @@ def scrape():
     return n_events, rows
 ```
 
+For a product feed as well, return a list of item dicts instead of `rows` and set `BRAND`
+and `LINK` (see `clients/staatsoper.py` and the docstring of `pagefeed.py`).
+
 Run `python3 pagefeed.py <name>`, commit the module and the new `feeds/<name>.csv`.
 The workflow picks it up automatically.
 
@@ -50,7 +85,9 @@ A client's run fails (and its last good CSV stays live) if:
 - the site is unreachable / returns an error,
 - fewer than `MIN_EVENTS` events are found,
 - no URL has a label,
-- the feed would shrink by more than 50 % compared with the last run.
+- the feed would shrink by more than 50 % compared with the last run,
+- (product feed) too many items lack a price or an image (`MAX_INCOMPLETE`), or the
+  first converted image doesn't come back as `200 image/jpeg`.
 
 The other clients are still updated; the workflow run is marked failed, which
 triggers a GitHub email. If a big drop is legitimate, delete `feeds/<client>.csv`

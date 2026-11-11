@@ -10,6 +10,7 @@ import re
 
 from pagefeed import FeedError, fetch
 
+ACTIVE = True            # False = skipped when running all clients
 BASE = "https://bergson.com"
 FILTER_URL = BASE + "/events/filter"
 MIN_EVENTS = 50          # currently ~280
