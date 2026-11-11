@@ -14,6 +14,17 @@ Daily Google Ads page feeds with all upcoming events, one CSV per client.
 
 Run locally: `python3 pagefeed.py` (all clients) or `python3 pagefeed.py staatsoper`.
 
+## Load on the client sites
+
+- Scraped at most once per Berlin day. The extra cron triggers only exist because GitHub
+  starts scheduled runs late, and they exit early if a run already succeeded that day.
+  Manual runs always scrape.
+- `fetch()` requests gzip (the Staatsoper calendar goes from 3.1 MB to 150 KB), sends one
+  request at a time with a 1 s pause, and identifies itself as
+  `event-pagefeeds/1.0 (+https://github.com/HolgerKurtz/event-pagefeeds)`.
+  New clients get this automatically by using `fetch()`.
+- The sites send no ETag/Last-Modified, so conditional requests aren't possible.
+
 ## Adding a client
 
 Create `clients/<name>.py` with:

@@ -4,26 +4,51 @@ on:
   schedule:
     # GitHub often starts scheduled runs hours late (observed ~5h), so run
     # right after midnight Berlin (CEST / CET) and once more as a fallback.
+    # The guard step below makes sure the client sites are scraped at most
+    # once per Berlin day; the extra triggers just exit early.
     - cron: "7 22 * * *"   # 00:07 Berlin in summer time
     - cron: "7 23 * * *"   # 00:07 Berlin in winter time
     - cron: "7 3 * * *"    # fallback
-  workflow_dispatch:        # manual "Run workflow" button
+  workflow_dispatch:        # manual "Run workflow" button – always runs
 
 permissions:
   contents: write
+  actions: read             # guard step lists earlier runs
 
 jobs:
   update:
     runs-on: ubuntu-latest
     steps:
+      # Scheduled runs skip if a run already succeeded today (Berlin date), so
+      # the sites are scraped once a day. A failed run doesn't count, so the
+      # next trigger retries. (In winter the "7 22" trigger fires at 23:07 Berlin,
+      # i.e. on a day that already had its run, so it skips too.)
+      - name: Skip if already updated today
+        id: guard
+        if: github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          today=$(TZ=Europe/Berlin date +%F)
+          done_today=$(gh run list -R "$GITHUB_REPOSITORY" -w update-pagefeed.yml -s success -L 20 \
+                         --json createdAt --jq '.[].createdAt' \
+                       | while read -r t; do TZ=Europe/Berlin date -d "$t" +%F; done \
+                       | grep -c "^$today$" || true)
+          if [ "$done_today" -gt 0 ]; then
+            echo "Skipping: feeds already updated today ($today, Berlin)"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/checkout@v5
+        if: steps.guard.outputs.skip != 'true'
 
       # Runs every client in clients/. If one fails, its old CSV stays live, the
       # others are still updated, and the run is marked failed -> GitHub emails you.
       - run: python3 pagefeed.py
+        if: steps.guard.outputs.skip != 'true'
 
       - name: Commit if changed
-        if: always()
+        if: always() && steps.guard.outputs.skip != 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898299+github-actions[bot]@users.noreply.github.com"

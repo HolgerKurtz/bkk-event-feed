@@ -18,9 +18,11 @@ so a failing scheduled run alerts us instead of publishing a broken feed.
 Usage: python3 pagefeed.py [client ...]     (no args = all clients)
 """
 import csv
+import gzip
 import importlib
 import io
 import sys
+import time
 import urllib.request
 from pathlib import Path
 
@@ -33,12 +35,28 @@ class FeedError(Exception):
     pass
 
 
+USER_AGENT = "event-pagefeeds/1.0 (+https://github.com/HolgerKurtz/event-pagefeeds)"
+REQUEST_PAUSE = 1.0      # seconds between requests, so we never hit a site in bursts
+_last_request = 0.0
+
+
 def fetch(url):
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (pagefeed)"})
-    with urllib.request.urlopen(req, timeout=60) as r:
-        if r.status != 200:
-            raise FeedError(f"{url} returned HTTP {r.status}")
-        return r.read().decode("utf-8")
+    """GET a page politely: one at a time, paused, gzip-compressed, honest User-Agent."""
+    global _last_request
+    wait = _last_request + REQUEST_PAUSE - time.monotonic()
+    if wait > 0:
+        time.sleep(wait)
+    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept-Encoding": "gzip"})
+    try:
+        with urllib.request.urlopen(req, timeout=60) as r:
+            if r.status != 200:
+                raise FeedError(f"{url} returned HTTP {r.status}")
+            body = r.read()
+            if r.headers.get("Content-Encoding") == "gzip":
+                body = gzip.decompress(body)
+            return body.decode("utf-8")
+    finally:
+        _last_request = time.monotonic()
 
 
 def check(client, n_events, rows, previous_count):
