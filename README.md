@@ -1,21 +1,46 @@
-# Bergson DSA page feed
+# Event page feeds for Google Ads (DSA)
 
-Daily Google Ads page feed with all upcoming events from bergson.com.
+Daily Google Ads page feeds with all upcoming events, one CSV per client.
 
-- `pagefeed.py` – scrapes `https://bergson.com/events/filter`, writes `pagefeed.csv`
-  (`Page URL`, `Custom label` = genre slugs like `klassik;jazz`). Python stdlib only.
-- `.github/workflows/update-pagefeed.yml` – runs daily, commits the CSV if it changed.
+| Client | Source | Labels | Feed URL |
+|---|---|---|---|
+| `bergson` | bergson.com/events/filter | genre slugs (`klassik;jazz`) | https://raw.githubusercontent.com/HolgerKurtz/event-pagefeeds/main/feeds/bergson.csv |
+| `staatsoper` | die-hamburgische-staatsoper.de/de/kalender (only pages with ≥1 future, not sold-out performance) | `oper` / `ballett` / `konzert` / `sonstiges` | https://raw.githubusercontent.com/HolgerKurtz/event-pagefeeds/main/feeds/staatsoper.csv |
 
-Feed URL for Google Ads (HTTPS, no auth):
-`https://raw.githubusercontent.com/<user>/<repo>/main/pagefeed.csv`
+- `pagefeed.py` – shared runner: fetches, sanity-checks and writes `feeds/<client>.csv`
+  (`Page URL`, `Custom label`). Python stdlib only.
+- `clients/<client>.py` – one scraper per website.
+- `.github/workflows/update-pagefeed.yml` – runs daily, commits changed CSVs.
+
+Run locally: `python3 pagefeed.py` (all clients) or `python3 pagefeed.py staatsoper`.
+
+## Adding a client
+
+Create `clients/<name>.py` with:
+
+```python
+from pagefeed import FeedError, fetch
+
+MIN_EVENTS = 50      # fewer means the site or the parser broke
+
+def scrape():
+    html = fetch("https://example.com/events")
+    rows = {}        # {absolute page URL: [label, ...]}
+    ...
+    return n_events, rows
+```
+
+Run `python3 pagefeed.py <name>`, commit the module and the new `feeds/<name>.csv`.
+The workflow picks it up automatically.
 
 ## When it breaks
 
-The script exits with an error (and the last good CSV stays live) if:
+A client's run fails (and its last good CSV stays live) if:
 - the site is unreachable / returns an error,
-- fewer than 50 events are found,
-- no event has a genre label,
+- fewer than `MIN_EVENTS` events are found,
+- no URL has a label,
 - the feed would shrink by more than 50 % compared with the last run.
 
-A failed run triggers a GitHub email. If a big drop is legitimate, delete
-`pagefeed.csv` and re-run the workflow manually.
+The other clients are still updated; the workflow run is marked failed, which
+triggers a GitHub email. If a big drop is legitimate, delete `feeds/<client>.csv`
+and re-run the workflow manually.

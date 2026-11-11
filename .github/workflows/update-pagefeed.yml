@@ -1,4 +1,4 @@
-name: Update page feed
+name: Update page feeds
 
 on:
   schedule:
@@ -18,13 +18,15 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      # Fails the run on any problem -> GitHub emails you; the old CSV stays live.
-      - run: python3 pagefeed.py pagefeed.csv
+      # Runs every client in clients/. If one fails, its old CSV stays live, the
+      # others are still updated, and the run is marked failed -> GitHub emails you.
+      - run: python3 pagefeed.py
 
       - name: Commit if changed
+        if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
-          git add pagefeed.csv
-          git diff --cached --quiet || git commit -m "Update page feed $(date -u +%F)"
+          git add feeds/
+          git diff --cached --quiet || git commit -m "Update page feeds $(date -u +%F)"
           git push

@@ -1,28 +1,32 @@
 #!/usr/bin/env python3
-"""Build a Google Ads DSA page feed (CSV) of all upcoming events at bergson.com.
+"""Build Google Ads DSA page feeds (CSV) of upcoming events, one per client.
 
-Source: https://bergson.com/events/filter — the internal endpoint the /programm
-page calls via AJAX. Without filter params it returns an HTML fragment with
-*all* upcoming events (no pagination).
+Each client is a module in clients/ that knows how to scrape its own website.
+It must define:
 
-Output columns: "Page URL", "Custom label" (genre slugs, ";"-separated).
+    MIN_EVENTS = 50          # fewer events than this means parsing or the site broke
+    def scrape():            # -> (event_count, {page_url: [label, ...]})
 
-Exits non-zero — and leaves the existing CSV untouched — if anything looks off,
+Optional: MAX_DROP (default 0.5) – fail if the feed shrinks by more than this
+fraction compared with the last run.
+
+Output: feeds/<client>.csv with columns "Page URL", "Custom label"
+(labels ";"-separated). If anything looks off for a client, its existing CSV is
+left untouched and the script exits non-zero (after processing all clients),
 so a failing scheduled run alerts us instead of publishing a broken feed.
 
-Usage: python3 pagefeed.py [output.csv]
+Usage: python3 pagefeed.py [client ...]     (no args = all clients)
 """
 import csv
+import importlib
 import io
-import re
 import sys
 import urllib.request
 from pathlib import Path
 
-BASE = "https://bergson.com"
-FILTER_URL = BASE + "/events/filter"
-MIN_EVENTS = 50          # currently ~280; far fewer means parsing or the site broke
-MAX_DROP = 0.5           # fail if the feed shrinks by more than 50% vs. last run
+ROOT = Path(__file__).resolve().parent
+CLIENTS_DIR = ROOT / "clients"
+FEEDS_DIR = ROOT / "feeds"
 
 
 class FeedError(Exception):
@@ -30,32 +34,20 @@ class FeedError(Exception):
 
 
 def fetch(url):
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (bergson-pagefeed)"})
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (pagefeed)"})
     with urllib.request.urlopen(req, timeout=60) as r:
         if r.status != 200:
             raise FeedError(f"{url} returned HTTP {r.status}")
         return r.read().decode("utf-8")
 
 
-def parse(page):
-    items = page.split('class="program-item ')[1:]
-    rows = {}
-    for item in items:
-        m = re.search(r'data-util-url-param="(/event/[^"]+)"', item)
-        if not m:
-            raise FeedError(f"Event item without /event/ URL: {item[:200]!r}")
-        labels = re.findall(r'data-filter-events-mood-slug-param="([^"]+)"', item)
-        url = BASE + m.group(1)
-        rows[url] = sorted(set(rows.get(url, [])) | set(labels))
-    return items, rows
-
-
-def check(items, rows, previous_count):
-    if len(items) < MIN_EVENTS:
-        raise FeedError(f"Only {len(items)} events found (expected >= {MIN_EVENTS}) – page structure may have changed.")
+def check(client, n_events, rows, previous_count):
+    if n_events < client.MIN_EVENTS:
+        raise FeedError(f"Only {n_events} events found (expected >= {client.MIN_EVENTS}) – page structure may have changed.")
     if not any(rows.values()):
-        raise FeedError("No event has a genre label – label markup may have changed.")
-    if previous_count and len(rows) < previous_count * (1 - MAX_DROP):
+        raise FeedError("No URL has a label – label markup may have changed.")
+    max_drop = getattr(client, "MAX_DROP", 0.5)
+    if previous_count and len(rows) < previous_count * (1 - max_drop):
         raise FeedError(f"Feed would shrink from {previous_count} to {len(rows)} URLs – refusing to overwrite.")
 
 
@@ -68,19 +60,36 @@ def to_csv(rows):
     return buf.getvalue()
 
 
-def main():
-    out = Path(sys.argv[1] if len(sys.argv) > 1 else "pagefeed.csv")
+def run(name):
+    client = importlib.import_module(f"clients.{name}")
+    out = FEEDS_DIR / f"{name}.csv"
     previous_count = None
     if out.exists():
         previous_count = max(0, len(out.read_text(encoding="utf-8").splitlines()) - 1)
-    try:
-        items, rows = parse(fetch(FILTER_URL))
-        check(items, rows, previous_count)
-    except Exception as e:
-        sys.exit(f"ERROR: {e}")
+    n_events, rows = client.scrape()
+    check(client, n_events, rows, previous_count)
     out.write_text(to_csv(rows), encoding="utf-8")
     labelled = sum(1 for v in rows.values() if v)
-    print(f"{len(rows)} URLs ({labelled} with genre labels) -> {out}")
+    print(f"{name}: {n_events} events, {len(rows)} URLs ({labelled} labelled) -> {out.relative_to(ROOT)}")
+
+
+def all_clients():
+    return sorted(p.stem for p in CLIENTS_DIR.glob("*.py") if not p.stem.startswith("_"))
+
+
+def main():
+    sys.path.insert(0, str(ROOT))
+    FEEDS_DIR.mkdir(exist_ok=True)
+    names = sys.argv[1:] or all_clients()
+    failed = []
+    for name in names:
+        try:
+            run(name)
+        except Exception as e:
+            print(f"ERROR {name}: {e}", file=sys.stderr)
+            failed.append(name)
+    if failed:
+        sys.exit(f"Failed: {', '.join(failed)}")
 
 
 if __name__ == "__main__":
