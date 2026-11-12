@@ -10,7 +10,9 @@ Product feed (XML): all events; sold-out ones are "out of stock".
 Labels: genre slugs like "klassik;jazz".
 
 Image: the list thumbnail /file/format/<n>/list_thumbnail/<h>/<f> rewritten to
-the original /file/show/<n>/<h>/<f> (JPEG/PNG/GIF, no conversion needed).
+the original /file/show/<n>/<h>/<f>. The originals can be GIFs or >8 MB, which Meta
+rejects, so CONVERT_IMAGES routes them through wsrv.nl (1200 px JPEG).
+Event pages have only this one image (no gallery), so no additional_image_link.
 Description: the meta description of the event page; falls back to the subtitle.
 Price: bergson.com shows none, so it comes from the event's ticket shop page
 (tickets.bergson.com/de/buyingflow/tickets/<group>/<event>/, linked as "Tickets"):
@@ -41,6 +43,7 @@ BASE = "https://bergson.com"
 FILTER_URL = BASE + "/events/filter"
 LINK = BASE + "/programm"
 BRAND = "Bergson"
+CONVERT_IMAGES = True
 MIN_EVENTS = 50          # currently ~240
 MAX_INCOMPLETE = 0.2     # ~7 % have no ticket link (brunches, guided tours, free events)
 SOCIAL_PRICE = 28.0      # for ranges starting at 0 (capped at the range's upper end)

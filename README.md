@@ -46,7 +46,9 @@ other photos from the production's "Impression" gallery (Meta's format for this 
 - Step-by-step diagram of where each Staatsoper field comes from:
   [`docs/staatsoper-feed-flow.html`](docs/staatsoper-feed-flow.html) (open it in a browser).
 - Bergson: one item per event (each date has its own page). Image = the original of the list
-  thumbnail (`/file/show/...`, already JPEG/PNG, no proxy). Price = lowest value of the price
+  thumbnail (`/file/show/...`), converted to a 1200 px JPEG through wsrv.nl, because some
+  originals are GIFs or larger than Meta's 8 MB limit. The event pages have no gallery, so
+  Bergson items have no `additional_image_link`. Price = lowest value of the price
   range in the event's ticket shop page (tickets.bergson.com); a range starting at € 0
   (free companion ticket) becomes `SOCIAL_PRICE` (28.00 EUR). "Ausverkauft!" there also
   makes the event out of stock. Description and price are cached like the Staatsoper
