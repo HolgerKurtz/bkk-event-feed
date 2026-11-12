@@ -6,7 +6,7 @@ Daily feeds with all upcoming events, per client:
 
 | Client | Source | Labels | Page feed (CSV) | Product feed (XML) |
 |---|---|---|---|---|
-| `bergson` | bergson.com/events/filter | genre slugs (`klassik;jazz`) | https://raw.githubusercontent.com/HolgerKurtz/event-pagefeeds/main/feeds/bergson.csv | – |
+| `bergson` | bergson.com/events/filter (sold-out events only in the product feed) | genre slugs (`klassik;jazz`) | https://raw.githubusercontent.com/HolgerKurtz/event-pagefeeds/main/feeds/bergson.csv | https://raw.githubusercontent.com/HolgerKurtz/event-pagefeeds/main/feeds/bergson.xml |
 | `staatsoper` | die-hamburgische-staatsoper.de/de/kalender (only pages with ≥1 future, not sold-out performance) | `oper` / `ballett` / `konzert` / `sonstiges` | https://raw.githubusercontent.com/HolgerKurtz/event-pagefeeds/main/feeds/staatsoper.csv | https://raw.githubusercontent.com/HolgerKurtz/event-pagefeeds/main/feeds/staatsoper.xml |
 
 - `pagefeed.py` – shared runner: fetches, sanity-checks and writes the feeds. Python stdlib only.
@@ -45,6 +45,12 @@ other photos from the production's "Impression" gallery (Meta's format for this 
   `feeds/<client>-details.json` and re-fetched after 30 days, so only new pages cause requests.
 - Step-by-step diagram of where each Staatsoper field comes from:
   [`docs/staatsoper-feed-flow.html`](docs/staatsoper-feed-flow.html) (open it in a browser).
+- Bergson: one item per event (each date has its own page). Image = the original of the list
+  thumbnail (`/file/show/...`, already JPEG/PNG, no proxy). Price = lowest value of the price
+  range in the event's ticket shop page (tickets.bergson.com); a range starting at € 0
+  (free companion ticket) becomes `SOCIAL_PRICE` (28.00 EUR). "Ausverkauft!" there also
+  makes the event out of stock. Description and price are cached like the Staatsoper
+  details (30 days), so only new events cause requests (event page + ticket page).
 - Pages without an image (side events such as tours, school programmes and talks) or without a
   listed price (presale not open yet) are left out of the product feed. They stay in the page feed.
 
