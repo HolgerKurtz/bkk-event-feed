@@ -15,10 +15,10 @@
  },
  "https://bergson.com/event/80er-party-05-dezember-2026": {
   "description": "Wie sangen die Spice Girls so treffend? „I wanna really, really, really wanna \"zig-a-zig\", ah“ — und genau das wollen wir auch! Unser DJ bringt die größten Hits der 80er zurück – von Eurodance und 80er Trash über Britpop bis zu Hip‑Hop. Freu dich auf eine ausgelassene Party in unserer Barbastelle im Untergeschoss – und lass uns tanzen!",
-  "fetched": "2026-11-12",
-  "price": null,
-  "sold_out": true,
-  "ticket": "https://tickets.bergson.com/de/buyingflow/tickets/16490/"
+  "fetched": "2026-11-13",
+  "price": 15.0,
+  "sold_out": false,
+  "ticket": "https://tickets.bergson.com/de/buyingflow/tickets/16490/42495/"
  },
  "https://bergson.com/event/80er-party-20-maerz-2027": {
   "description": "Wie sang Whitney einst so schön? „I Wanna Dance With Somebody“… Und genau das wollen wir auch! Unser DJ bringt die größten Hits der 80er zurück – von Pop und Rock über Italo-Disco bis zur Neuen Deutschen Welle. Freu Dich auf eine ausgelassene Party in unserer Barbastelle im Untergeschoss – und lass uns tanzen!",
@@ -379,10 +379,10 @@
  },
  "https://bergson.com/event/botticelli-baby-13-11-26": {
   "description": "Ein Konzert von Botticelli Baby ist gleichzusetzen mit einem musikalischen Ausnahmezustand. Die Mission ist klar und deutlich: Ekstase! Sieben Musiker, sieben Instrumente und ein Sound, der Jazz, Punk, Blues, Folk und Pop in einen einzigen Rausch verwandelt. Fruchtiges Klang-Chaos, das sich mit voller Wucht bündelt und das Publikum mitten ins Herz trifft. Schweißnasses Haar, Muskelkater am nächsten Tag und dieses breite Grinsen, das einfach nicht verschwinden will, erwarten Dich!",
-  "fetched": "2026-11-12",
-  "price": null,
+  "fetched": "2026-11-13",
+  "price": 28.0,
   "sold_out": false,
-  "ticket": ""
+  "ticket": "https://tickets.bergson.com/de/buyingflow/tickets/16255/39151/"
  },
  "https://bergson.com/event/brunch-im-bergson-15-november-2026": {
   "description": "Im Bergson Kunstkraftwerk versorgen wir Dich am gemütlichsten Tag der Woche mit unserem entspannt-köstlichen Bergson Brunch: Duftender Kaffee, frisch zubereitete Eierspeisen, ofenfrisches Brot und Gebäck, Käse-, Wurst- und Schinkenspezialitäten, bayerische Weißwürscht' und alles weitere, was Dein Brunch-Herz begehren mag, tischen wir für Dich auf. Auch an Schleckermäulchen ist in Form feiner Desserts zum Abschluss gedacht. Es ist ganz einfach: vorbeikommen, Seele baumeln und verwöhnen lassen!",
@@ -1489,6 +1489,13 @@
   "price": 15.0,
   "sold_out": false,
   "ticket": "https://tickets.bergson.com/de/buyingflow/tickets/16997/42166/"
+ },
+ "https://bergson.com/event/silo-west-trance-bounce-day-rave-21-november-2026": {
+  "description": "Wo vor vier Jahrzehnten illegale Raves und die Underground-Szene das Backsteingemäuer des ehemaligen Heizwerks zum Beben und die Leute zum Tanzen brachten, kommt nun der Techno von damals zurück.Wo vor vier Jahrzehnten illegale Raves und die Underground-Szene das Backsteingemäuer des ehemaligen Heizwerks zum Beben und die Leute zum Tanzen brachten, kommt nun der Techno von damals zurück.",
+  "fetched": "2026-11-13",
+  "price": 16.0,
+  "sold_out": false,
+  "ticket": "https://tickets.bergson.com/de/buyingflow/tickets/16533/43696/"
  },
  "https://bergson.com/event/silvesterbrunch-31-dezember-2026": {
   "description": "An Silvester versorgen wir Dich mit unserem entspannt-köstlichen Bergson Brunch: Duftender Kaffee, frisch zubereitete Eierspeisen, ofenfrisches Brot und Gebäck, Käse-, Wurst- und Schinkenspezialitäten, bayerische Weißwürscht' und alles weitere, was Dein Brunch-Herz begehren mag, tischen wir für Dich auf. Auch an Schleckermäulchen ist in Form feiner Desserts zum Abschluss gedacht. Es ist ganz einfach: vorbeikommen, Seele baumeln und verwöhnen lassen! Gut gestärkt kannst Du nach dem Brunch bei kostenfreiem Eintritt durch unsere Galerieflächen im Neubau und den Silos streifen.",
