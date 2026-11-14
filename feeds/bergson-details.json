@@ -15,10 +15,10 @@
  },
  "https://bergson.com/event/80er-party-05-dezember-2026": {
   "description": "Wie sangen die Spice Girls so treffend? „I wanna really, really, really wanna \"zig-a-zig\", ah“ — und genau das wollen wir auch! Unser DJ bringt die größten Hits der 80er zurück – von Eurodance und 80er Trash über Britpop bis zu Hip‑Hop. Freu dich auf eine ausgelassene Party in unserer Barbastelle im Untergeschoss – und lass uns tanzen!",
-  "fetched": "2026-11-13",
+  "fetched": "2026-11-14",
   "price": 15.0,
-  "sold_out": false,
-  "ticket": "https://tickets.bergson.com/de/buyingflow/tickets/16490/42495/"
+  "sold_out": true,
+  "ticket": "https://tickets.bergson.com/de/buyingflow/tickets/16490/"
  },
  "https://bergson.com/event/80er-party-20-maerz-2027": {
   "description": "Wie sang Whitney einst so schön? „I Wanna Dance With Somebody“… Und genau das wollen wir auch! Unser DJ bringt die größten Hits der 80er zurück – von Pop und Rock über Italo-Disco bis zur Neuen Deutschen Welle. Freu Dich auf eine ausgelassene Party in unserer Barbastelle im Untergeschoss – und lass uns tanzen!",

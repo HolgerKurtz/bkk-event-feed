@@ -5,36 +5,6 @@
     <link>https://bergson.com/programm</link>
     <description>Upcoming events – Bergson</description>
     <item>
-      <g:id>tobias-haberl-mut-ein-weckruf-in-bangen-zeiten-13-november-2026</g:id>
-      <g:title>Tobias Haberl: „Mut. Ein Weckruf in bangen Zeiten“</g:title>
-      <g:description>Wir begrüßen Autor Tobias Haberl zu Buchpräsentation &amp; Talk „Mut. Ein Weckruf in bangen Zeiten“ im Bergson.</g:description>
-      <g:link>https://bergson.com/event/tobias-haberl-mut-ein-weckruf-in-bangen-zeiten-13-november-2026</g:link>
-      <g:image_link>https://wsrv.nl/?url=https%3A%2F%2Fbergson.com%2Ffile%2Fshow%2F2099%2Fa36a33%2FAkademie_Website_Artwork_261113_Buchclub_TobiasHaberl_MUT_260612.jpg&amp;w=1200&amp;output=jpg&amp;q=85</g:image_link>
-      <g:price>15.00 EUR</g:price>
-      <g:availability>in stock</g:availability>
-      <g:condition>new</g:condition>
-      <g:brand>Bergson</g:brand>
-      <g:custom_label_0>13.11.2026</g:custom_label_0>
-      <g:custom_label_1>akademie;wort</g:custom_label_1>
-      <g:custom_label_2>Panorama</g:custom_label_2>
-      <g:custom_label_3>19:00</g:custom_label_3>
-    </item>
-    <item>
-      <g:id>botticelli-baby-13-11-26</g:id>
-      <g:title>Botticelli Baby</g:title>
-      <g:description>Ein Konzert von Botticelli Baby ist gleichzusetzen mit einem musikalischen Ausnahmezustand. Die Mission ist klar und deutlich: Ekstase! Sieben Musiker, sieben Instrumente und ein Sound, der Jazz, Punk, Blues, Folk und Pop in einen einzigen Rausch verwandelt. Fruchtiges Klang-Chaos, das sich mit voller Wucht bündelt und das Publikum mitten ins Herz trifft. Schweißnasses Haar, Muskelkater am nächsten Tag und dieses breite Grinsen, das einfach nicht verschwinden will, erwarten Dich!</g:description>
-      <g:link>https://bergson.com/event/botticelli-baby-13-11-26</g:link>
-      <g:image_link>https://wsrv.nl/?url=https%3A%2F%2Fbergson.com%2Ffile%2Fshow%2F1753%2Fb4d5aa%2FBotticelliBaby-09174_%2528c%2529_Martin_Hinse.jpg&amp;w=1200&amp;output=jpg&amp;q=85</g:image_link>
-      <g:price>28.00 EUR</g:price>
-      <g:availability>in stock</g:availability>
-      <g:condition>new</g:condition>
-      <g:brand>Bergson</g:brand>
-      <g:custom_label_0>13.11.2026</g:custom_label_0>
-      <g:custom_label_1>jazz;pop</g:custom_label_1>
-      <g:custom_label_2>Barbastelle</g:custom_label_2>
-      <g:custom_label_3>20:00</g:custom_label_3>
-    </item>
-    <item>
       <g:id>bergson-metal-fest-14-november-2026</g:id>
       <g:title>Bergson Metal Fest</g:title>
       <g:description>Aufsatteln, anschnallen und ab geht die wilde Fahrt: Unser Metal Fest geht in die dritte Runde! Wir präsentieren wieder den heissesten Metal-Spaß, den die Szene so herzugeben hat (und wir auch bekommen konnten). Dieses Mal mit female-fronted Power aus UK, den größten Geheimtipps, die Berlin herzugeben hat, feinstem Hard- und Metalcore. Es wird wieder ein ganz besonderer Tag, um unsere riesige Kesselhalle zum Beben zu bringen.</g:description>
@@ -536,7 +506,7 @@
       <g:link>https://bergson.com/event/80er-party-05-dezember-2026</g:link>
       <g:image_link>https://wsrv.nl/?url=https%3A%2F%2Fbergson.com%2Ffile%2Fshow%2F1829%2F6f66cd%2FBarbastelle-Party.jpg&amp;w=1200&amp;output=jpg&amp;q=85</g:image_link>
       <g:price>15.00 EUR</g:price>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:brand>Bergson</g:brand>
       <g:custom_label_0>05.12.2026</g:custom_label_0>
